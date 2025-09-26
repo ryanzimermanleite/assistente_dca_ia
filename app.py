@@ -1,4 +1,5 @@
 import os
+import time
 from time import sleep
 import tempfile
 import streamlit as st
@@ -8,6 +9,8 @@ from langchain_openai import ChatOpenAI
 from langchain_community.document_loaders import WebBaseLoader, YoutubeLoader, CSVLoader, PyPDFLoader, TextLoader
 from langchain.prompts import ChatPromptTemplate
 from fake_useragent import UserAgent
+from openai import RateLimitError
+import random
 #
 TIPOS_ARQUIVOS_VALIDOS = [
     'Site', 'Youtube', 'PDF', 'CSV', 'TXT'
@@ -29,6 +32,25 @@ CONFIG_MODELOS = {
 }
 
 MEMORIA = ConversationBufferMemory()
+
+def stream_com_retry(chain, payload, max_retries=5, base=1.2):
+    tentativa = 0
+    while True:
+        try:
+            for chunk in chain.stream(payload):
+                yield chunk
+            return
+        except RateLimitError as e:
+            if tentativa >= max_retries:
+                raise
+            espera = (base ** tentativa) + random.uniform(0, 0.6)
+            st.info(f"Calma aí… limite da API atingido. Tentando de novo em {espera:.1f}s (tentativa {tentativa+1}/{max_retries})")
+            time.sleep(espera)
+            tentativa += 1
+        except Exception:
+            # Re-levanta para o handler externo mostrar stack
+            raise
+
 def carrega_arquivos(tipo_arquivo, arquivo):
     if tipo_arquivo == 'Site':
         if not arquivo or not isinstance(arquivo, str):
@@ -180,30 +202,62 @@ def pagina_chat():
     st.header("🤖 Bem-vindo ao Assistente do DCA!", divider=True)
 
     chain = st.session_state.get('chain')
-
     if chain is None:
         st.error("Por favor, carregue um assistente na barra lateral.")
         st.stop()
 
     memoria = st.session_state.get("memoria", MEMORIA)
 
+    # re-render do histórico
     for mensagem in memoria.buffer_as_messages:
-        chat = st.chat_message(mensagem.type)
+        chat = st.chat_message(mensagem.type)  # 'human'/'ai' já funcionam com Streamlit
         chat.markdown(mensagem.content)
 
     input_usuario = st.chat_input("Digite sua mensagem aqui...")
-    if input_usuario:
-        memoria.chat_memory.add_user_message(input_usuario)
-        chat = st.chat_message("human")
-        chat.markdown(input_usuario)
-        chat = st.chat_message("ai")
-        resposta = chat.write_stream(chain.stream({
-            'input': input_usuario, 
-            'chat_history': memoria.buffer_as_messages
-            }))
+    if not input_usuario:
+        return
 
-        memoria.chat_memory.add_ai_message(resposta)
-        st.session_state["memoria"] = memoria
+    # anti-duplicado rápido (evita flood por duplo Enter)
+    agora = time.time()
+    if (st.session_state.get("last_input_text") == input_usuario and
+        agora - st.session_state.get("last_input_at", 0) < 2.0):
+        st.warning("Mensagem duplicada ignorada.")
+        return
+    st.session_state["last_input_text"] = input_usuario
+    st.session_state["last_input_at"] = agora
+
+    # adiciona e mostra a mensagem do usuário
+    memoria.chat_memory.add_user_message(input_usuario)
+    st.chat_message("human").markdown(input_usuario)
+
+    # responde com streaming (com retry e tratamento de erros)
+    ai_box = st.chat_message("ai")
+    resposta_final = ""
+    try:
+        resposta_final = ai_box.write_stream(
+            stream_com_retry(
+                chain,
+                {
+                    'input': input_usuario,
+                    'chat_history': memoria.buffer_as_messages
+                }
+            )
+        )
+    except RateLimitError as e:
+        st.error("A OpenAI limitou suas requisições agora. Tente novamente em alguns segundos "
+                 "ou altere modelo/chave na aba lateral.")
+        st.caption("Dicas: use gpt-4o-mini quando possível; reduza o tamanho do contexto; evite mandar muitas mensagens em sequência.")
+        st.stop()
+    except Exception as e:
+        st.error(f"Falha ao chamar o modelo: {type(e).__name__}: {e}")
+        # mostra só o final do stack para não poluir
+        st.code("".join(traceback.format_exc())[-2000:])
+        st.stop()
+
+    # salva resposta na memória e persiste estado
+    memoria.chat_memory.add_ai_message(resposta_final or "")
+    st.session_state["memoria"] = memoria
+
 
 
 def sidebar():
