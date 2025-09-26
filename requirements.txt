@@ -7,3 +7,4 @@ bs4
 pypdf
 unstructured
 fake_useragent
+langchain_openai
