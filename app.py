@@ -15,8 +15,8 @@ TIPOS_ARQUIVOS_VALIDOS = [
 
 CONFIG_MODELOS = {
     'OpenAI': {
-        'modelos': ['gpt-4o-mini-2024-07-18', 'gpt-4o-2024-11-20',
-                    'gpt-5-mini-2025-08-07', 'gpt-5-2025-08-07'],
+        'modelos': ['gpt-4o-mini', 'gpt-4o',
+                    'gpt-5-mini', 'gpt-5'],
         'chat': ChatOpenAI,
         # 👇 coloque sua chave padrão aqui#
         'default_key': "SUA_CHAVE_AQUI"
