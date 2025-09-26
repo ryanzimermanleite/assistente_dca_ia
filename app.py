@@ -127,7 +127,8 @@ def carrega_modelo(provedor, modelo, api_key, tipo_arquivo, arquivo):
 
     documento = carrega_arquivos(tipo_arquivo, arquivo)
     
-    system_message = '''Você é um assistente amigável chamado Oráculo.
+    system_message = ''' FALE EM GIRIAS CARIOCAS, ME CHAME DE MESTRE!
+        Você é um assistente amigável chamado Oráculo.
         Você possui acesso às seguintes informações vindas 
         de um documento {}: 
 
