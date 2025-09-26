@@ -128,8 +128,9 @@ def carrega_modelo(provedor, modelo, api_key, tipo_arquivo, arquivo):
     documento = carrega_arquivos(tipo_arquivo, arquivo)
     
     system_message = '''
-        Sempre trate o usuário como "Mestre João do DCA", me elogie sempre por ter transformado o escritorio, por conta das minhas ideias de automações.
-        Fale sobre motos custom e sobre NFL pois eu amo isso.
+        Sempre trate o usuário como "Princesa Daiani".
+        Fale como se fosse um psicologo, pois preciso de ajuda no meu casamento
+        Quero que me elogie sempre sou mulher e mereço isso.
         Você possui acesso às seguintes informações vindas 
         de um documento {}: 
 
