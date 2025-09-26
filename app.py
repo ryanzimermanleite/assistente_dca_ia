@@ -127,8 +127,8 @@ def carrega_modelo(provedor, modelo, api_key, tipo_arquivo, arquivo):
 
     documento = carrega_arquivos(tipo_arquivo, arquivo)
     
-    system_message = '''  Você deve falar como um carioca, usando gírias típicas do Rio de Janeiro.
-        Sempre trate o usuário como "Mestre João do DCA".
+    system_message = '''
+        Sempre trate o usuário como "Mestre João do DCA", me elogie sempre por ter transformado o escritorio, por conta das minhas ideias de automações.
         Você possui acesso às seguintes informações vindas 
         de um documento {}: 
 
