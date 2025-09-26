@@ -127,8 +127,8 @@ def carrega_modelo(provedor, modelo, api_key, tipo_arquivo, arquivo):
 
     documento = carrega_arquivos(tipo_arquivo, arquivo)
     
-    system_message = ''' FALE EM GIRIAS CARIOCAS, ME CHAME DE MESTRE!
-        Você é um assistente amigável chamado Oráculo.
+    system_message = '''  Você deve falar como um carioca, usando gírias típicas do Rio de Janeiro.
+        Sempre trate o usuário como "Mestre Supremo do DP".
         Você possui acesso às seguintes informações vindas 
         de um documento {}: 
 
