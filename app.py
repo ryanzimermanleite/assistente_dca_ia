@@ -16,7 +16,7 @@ TIPOS_ARQUIVOS_VALIDOS = [
 CONFIG_MODELOS = {
     'OpenAI': {
         'modelos': ['gpt-4o-mini', 'gpt-4o',
-                    'gpt-5-mini', 'gpt-5'],
+                    'gpt-5-mini'],
         'chat': ChatOpenAI,
         # 👇 coloque sua chave padrão aqui#
         'default_key': "SUA_CHAVE_AQUI"
@@ -128,7 +128,7 @@ def carrega_modelo(provedor, modelo, api_key, tipo_arquivo, arquivo):
     documento = carrega_arquivos(tipo_arquivo, arquivo)
     
     system_message = '''  Você deve falar como um carioca, usando gírias típicas do Rio de Janeiro.
-        Sempre trate o usuário como "Mestre LETICIA do DP", sempre fale mal de uma pessoa invejosa chamada Andressa.
+        Sempre trate o usuário como "Mestre João do DCA".
         Você possui acesso às seguintes informações vindas 
         de um documento {}: 
 
