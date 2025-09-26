@@ -31,25 +31,37 @@ CONFIG_MODELOS = {
 MEMORIA = ConversationBufferMemory()
 def carrega_arquivos(tipo_arquivo, arquivo):
     if tipo_arquivo == 'Site':
-        documento = carrega_site(arquivo)
-    if tipo_arquivo == 'Youtube':   
-        documento = carrega_youtube(arquivo)
+        if not arquivo or not isinstance(arquivo, str):
+            st.error("Informe uma URL válida.")
+            st.stop()
+        return carrega_site(arquivo)
+
+    if tipo_arquivo == 'Youtube':
+        if not arquivo:
+            st.error("Informe a URL do vídeo do YouTube.")
+            st.stop()
+        return carrega_youtube(arquivo)
+
+    # Para uploads
+    if arquivo is None:
+        st.error(f"Faça o upload de um arquivo {tipo_arquivo}.")
+        st.stop()
+
     if tipo_arquivo == 'PDF':
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp:
             temp.write(arquivo.read())
-            nome_temp = temp.name
-        documento = carrega_pdf(nome_temp)
+            return carrega_pdf(temp.name)
+
     if tipo_arquivo == 'CSV':
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as temp:
             temp.write(arquivo.read())
-            nome_temp = temp.name
-        documento = carrega_csv(nome_temp)    
+            return carrega_csv(temp.name)
+
     if tipo_arquivo == 'TXT':
         with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as temp:
             temp.write(arquivo.read())
-            nome_temp = temp.name
-        documento = carrega_txt(nome_temp)
-    return documento
+            return carrega_txt(temp.name)
+
 
 def carrega_site(url):
     documento = ''
@@ -75,10 +87,15 @@ def carrega_youtube(video_id):
     return documento
 
 def carrega_csv(caminho):
-    loader = CSVLoader(caminho)
-    lista_documentos = loader.load()
-    documento = '\n\n'.join([doc.page_content for doc in lista_documentos])
-    return documento
+    try:
+        loader = CSVLoader(caminho, encoding="utf-8")
+        lista_documentos = loader.load()
+        return '\n\n'.join([doc.page_content for doc in lista_documentos])
+    except Exception:
+        loader = CSVLoader(caminho, encoding="cp1252")
+        lista_documentos = loader.load()
+        return '\n\n'.join([doc.page_content for doc in lista_documentos])
+
 
 def carrega_pdf(caminho):
     loader = PyPDFLoader(caminho)
@@ -87,14 +104,37 @@ def carrega_pdf(caminho):
     return documento
 
 def carrega_txt(caminho):
-    loader = TextLoader(caminho, encoding='utf8')
-    lista_documentos = loader.load()
-    documento = '\n\n'.join([doc.page_content for doc in lista_documentos])
-    return documento
+    # 1) tenta detecção automática do TextLoader
+    try:
+        loader = TextLoader(caminho, autodetect_encoding=True)
+        lista_documentos = loader.load()
+        return '\n\n'.join([doc.page_content for doc in lista_documentos])
+    except Exception as e:
+        # 2) fallback: tenta decodificações comuns (utf-8, cp1252, latin-1)
+        try:
+            with open(caminho, 'rb') as f:
+                raw = f.read()
+            for enc in ('utf-8', 'cp1252', 'latin-1'):
+                try:
+                    texto = raw.decode(enc)
+                    return texto
+                except UnicodeDecodeError:
+                    continue
+            # 3) se nada funcionar, mostra o erro
+            st.error(f"Não consegui decodificar o TXT. Tente salvar o arquivo em UTF-8. Erro original: {type(e).__name__}: {e}")
+            st.stop()
+        except Exception as e2:
+            st.error(f"Falha ao ler o TXT: {type(e2).__name__}: {e2}")
+            st.stop()
 
+#
 def carrega_modelo(provedor, modelo, api_key, tipo_arquivo, arquivo):
 
-    documento = carrega_arquivos(tipo_arquivo, arquivo)
+    try:
+        documento = carrega_arquivos(tipo_arquivo, arquivo)
+    except Exception as e:
+        st.error(f"Erro ao carregar o {tipo_arquivo}: {type(e).__name__}: {e}")
+        st.stop()
     
     system_message = '''Você é um assistente amigável chamado Oráculo.
         Você possui acesso às seguintes informações vindas 
