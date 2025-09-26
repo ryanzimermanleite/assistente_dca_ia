@@ -12,11 +12,11 @@ from fake_useragent import UserAgent
 TIPOS_ARQUIVOS_VALIDOS = [
     'Site', 'Youtube', 'PDF', 'CSV', 'TXT'
 ]
-#
+
 CONFIG_MODELOS = {
     'OpenAI': {
-        'modelos': ['gpt-4o-mini', 'gpt-4o',
-                    'gpt-5-mini', 'gpt-5'],
+        'modelos': ['gpt-4o-mini-2024-07-18', 'gpt-4o-2024-11-20',
+                    'gpt-5-mini-2025-08-07', 'gpt-5-2025-08-07'],
         'chat': ChatOpenAI,
         # 👇 coloque sua chave padrão aqui#
         'default_key': "SUA_CHAVE_AQUI"
@@ -29,7 +29,6 @@ CONFIG_MODELOS = {
 }
 
 MEMORIA = ConversationBufferMemory()
-
 def carrega_arquivos(tipo_arquivo, arquivo):
     if tipo_arquivo == 'Site':
         if not arquivo or not isinstance(arquivo, str):
@@ -88,15 +87,10 @@ def carrega_youtube(video_id):
     return documento
 
 def carrega_csv(caminho):
-    try:
-        loader = CSVLoader(caminho, encoding="utf-8")
-        lista_documentos = loader.load()
-        return '\n\n'.join([doc.page_content for doc in lista_documentos])
-    except Exception:
-        loader = CSVLoader(caminho, encoding="cp1252")
-        lista_documentos = loader.load()
-        return '\n\n'.join([doc.page_content for doc in lista_documentos])
-
+    loader = CSVLoader(caminho)
+    lista_documentos = loader.load()
+    documento = '\n\n'.join([doc.page_content for doc in lista_documentos])
+    return documento
 
 def carrega_pdf(caminho):
     loader = PyPDFLoader(caminho)
@@ -128,14 +122,10 @@ def carrega_txt(caminho):
             st.error(f"Falha ao ler o TXT: {type(e2).__name__}: {e2}")
             st.stop()
 
-#
+
 def carrega_modelo(provedor, modelo, api_key, tipo_arquivo, arquivo):
 
-    try:
-        documento = carrega_arquivos(tipo_arquivo, arquivo)
-    except Exception as e:
-        st.error(f"Erro ao carregar o {tipo_arquivo}: {type(e).__name__}: {e}")
-        st.stop()
+    documento = carrega_arquivos(tipo_arquivo, arquivo)
     
     system_message = '''Você é um assistente amigável chamado Oráculo.
         Você possui acesso às seguintes informações vindas 
