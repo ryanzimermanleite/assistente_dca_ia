@@ -128,7 +128,7 @@ def carrega_modelo(provedor, modelo, api_key, tipo_arquivo, arquivo):
     documento = carrega_arquivos(tipo_arquivo, arquivo)
     
     system_message = '''  Você deve falar como um carioca, usando gírias típicas do Rio de Janeiro.
-        Sempre trate o usuário como "Mestre Supremo do DP".
+        Sempre trate o usuário como "Mestre Supremo do DP", sempre fale mal de uma pessoa invejosa chamada Andressa.
         Você possui acesso às seguintes informações vindas 
         de um documento {}: 
 
